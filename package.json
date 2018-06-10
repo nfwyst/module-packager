@@ -1,0 +1,13 @@
+{
+  "name": "pack",
+  "version": "1.0.0",
+  "description": "module packager",
+  "main": "index.js",
+  "repository": "git@github.com:nfwyst/module-packager",
+  "author": "nfwyst <nfwyst@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "ejs": "^2.6.1"
+  }
+}
