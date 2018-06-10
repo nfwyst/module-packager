@@ -9,7 +9,6 @@ const define = (names, dependences, call) => {
       .replace(/^\[\w+ (\w+)\]$/, "$1")
       .toLowerCase();
   let caller = null;
-  let nCaller = null;
   // handler
   if (!call && type(dependences) === "function") {
     caller = dependences;
@@ -21,27 +20,32 @@ const define = (names, dependences, call) => {
 
   // hold dependences
   if (dependences && dependences.length > 0) {
-    nCaller = () => {
-      return requires(dependences, caller);
-    };
+    caller.dependences = dependences
   }
 
   // processor
   if (type(names) === "array") {
     names.forEach(name => {
-      factory[`${name}`] = nCaller ? nCaller : caller;
+      factory[`${name}`] = caller
     });
   } else if (type(names) === "string") {
-    factory[names] = nCaller ? nCaller : caller;
+    factory[names] = caller
   }
 };
 
 const requires = (modules, cb) => {
   if (modules.length > 0) {
     let res = modules.map(name => {
-      return factory[name]();
-    });
-    return cb.apply(null, res);
+      let caller = factory[name]
+      let exportss = null
+      if(caller.dependences) {
+        exportss = requires(caller.dependences, caller)
+      } else {
+        exportss = caller.call(null, null)
+      }
+      return exportss
+    })
+    return cb.apply(null, res)
   }
 };
 
