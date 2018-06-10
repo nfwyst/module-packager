@@ -5,6 +5,9 @@ let fs = require("fs");
 let ejs = require("ejs");
 let path = require("path");
 
+// css loader
+let styleLoader = require('../loader/style.js')
+
 let modules = [];
 
 let fileExists = function(path) {
@@ -65,15 +68,23 @@ let writeFile = function(output, result,  callback) {
   }
 };
 
-let getContent = function(entry) {
-  let content = null;
+let getContent = function(entry, loaders) {
+  let content = null
+  loaders = loaders || []
   content = getScript
     .call(null, entry)
     .replace(/require\(['"'](.+?)['"']\)/g, function(patern, target) {
-      let name = path.join("./src", target);
-      getContent.call(null, name)
-      return 'require("' + name + '")';
+      let name = path.join("./src", target)
+      getContent.call(null, name, loaders)
+      return 'require("' + name + '")'
     });
+
+  loaders.forEach(function(loader, index) {
+    let rule = new RegExp(Object.keys(loader)[0])
+    if(rule.test(entry)) {
+      content = Object.values(loader)[0].call(null, content)
+    }
+  })
   modules.push({
     entry: entry,
     content: content
@@ -82,9 +93,12 @@ let getContent = function(entry) {
 };
 
 // init pack
+let loaders = [{
+  '\.css$': styleLoader
+}]
 let result = ejs.render(getTemplate.call(null, null), {
   entry: config.entry,
-  modules: getContent.call(null, config.entry)
+  modules: getContent.call(null, config.entry, loaders)
 });
 
 writeFile.call(null, config.output, result, fileExists);

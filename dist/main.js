@@ -11,8 +11,22 @@
   })({
     
       
+        'src/css/main.css': (function(module, exports, require){
+          eval(`
+    let style = document.createElement('style')
+    style.innerText = "body {  background-color: aquamarine;  width: 100vh;  height: 100vh;}"
+    document.head.appendChild(style)
+  `)
+        })
+    
+      
+              ,
+      
         'src/b.js': (function(module, exports, require){
-          eval(`console.log('hello I am b.js')
+          eval(`require("src/css/main.css")
+
+
+console.log('hello I am b.js')
 `)
         })
     
