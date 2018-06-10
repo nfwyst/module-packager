@@ -1,3 +1,3 @@
-console.log('I am in test2 files')
+console.log("I am in test2 files");
 
-module.exports = '你好'
+module.exports = "你好";

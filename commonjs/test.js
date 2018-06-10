@@ -1,13 +1,13 @@
-requires('./test1.js')
+requires("./test1.js");
 
-const a = (name) => {
-    console.log(`hello my name is ${name}`)
-}
+const a = name => {
+  console.log(`hello my name is ${name}`);
+};
 
 let name = "hahah";
 
-a(name)
+a(name);
 
 module.exports = {
-    a
-}
+  a
+};
