@@ -3,6 +3,9 @@ let config = require("../config/default.js");
 
 let fs = require("fs");
 let ejs = require("ejs");
+let path = require("path");
+
+let modules = [];
 
 let fileExists = function(path) {
   try {
@@ -33,20 +36,27 @@ let getTemplate = function() {
     }
     return require('<%=entry%>')
   })({
-    '<%=entry%>':
-    eval(\`<%-content%>\`)
+    '<%=entry%>': (function(module, exports, require) {
+      eval(\`<%-content%>\`)
+    })
+    <% for(let i = 0; i < modules.length; i++) { %>
+        ,
+        '<%-modules[i].entry%>': (function(module, exports, require){
+          eval(\`<%-modules[i].content%>\`)
+        })
+    <% } %>
   })
-  `
+  `;
 };
 
 let writeFile = function(output, callback) {
   try {
     fs.writeFileSync(output, result);
-  } catch(e) {
-    if(!callback.call(null, output)) {
-      if(output.split('/')[1] === 'dist') {
-        fs.mkdirSync('dist')
-        writeFile.call(null, output, result)
+  } catch (e) {
+    if (!callback.call(null, output)) {
+      if (output.split("/")[1] === "dist") {
+        fs.mkdirSync("dist");
+        writeFile.call(null, output, result);
       } else {
         return false;
       }
@@ -54,14 +64,28 @@ let writeFile = function(output, callback) {
       return false;
     }
   }
-}
+};
 
-let result = ejs.render(
-  getTemplate.call(null, null),
-  {
-    entry: config.entry,
-    content: getScript.call(null, config.entry)
-  }
-);
+let getContent = function(entry) {
+  let content = null;
+  content = getScript
+    .call(null, entry)
+    .replace(/require\(['"'](.+?)['"']\)/g, function(patern, target) {
+      let name = path.join("./src", target);
+      let content = getContent.call(null, name)
+      modules.push({
+        entry: name,
+        content: content
+      });
+      return 'require("' + name + '")';
+    });
+  return content;
+};
 
-writeFile.call(null, config.output, fileExists)
+let result = ejs.render(getTemplate.call(null, null), {
+  entry: config.entry,
+  content: getContent.call(null, config.entry),
+  modules: modules
+});
+
+writeFile.call(null, config.output, fileExists);
