@@ -36,11 +36,10 @@ let getTemplate = function() {
     }
     return require('<%=entry%>')
   })({
-    '<%=entry%>': (function(module, exports, require) {
-      eval(\`<%-content%>\`)
-    })
     <% for(let i = 0; i < modules.length; i++) { %>
-        ,
+      <% if(i !== 0) { %>
+              ,
+      <% } %>
         '<%-modules[i].entry%>': (function(module, exports, require){
           eval(\`<%-modules[i].content%>\`)
         })
@@ -49,7 +48,7 @@ let getTemplate = function() {
   `;
 };
 
-let writeFile = function(output, callback) {
+let writeFile = function(output, result,  callback) {
   try {
     fs.writeFileSync(output, result);
   } catch (e) {
@@ -72,20 +71,20 @@ let getContent = function(entry) {
     .call(null, entry)
     .replace(/require\(['"'](.+?)['"']\)/g, function(patern, target) {
       let name = path.join("./src", target);
-      let content = getContent.call(null, name)
-      modules.push({
-        entry: name,
-        content: content
-      });
+      getContent.call(null, name)
       return 'require("' + name + '")';
     });
-  return content;
+  modules.push({
+    entry: entry,
+    content: content
+  })
+  return modules
 };
 
+// init pack
 let result = ejs.render(getTemplate.call(null, null), {
   entry: config.entry,
-  content: getContent.call(null, config.entry),
-  modules: modules
+  modules: getContent.call(null, config.entry)
 });
 
-writeFile.call(null, config.output, fileExists);
+writeFile.call(null, config.output, result, fileExists);
