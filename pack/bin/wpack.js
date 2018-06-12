@@ -7,6 +7,8 @@ let path = require("path");
 
 // css loader
 let styleLoader = require('../loader/style.js')
+// sass loader
+let sassLoader = require('../loader/sass.js')
 // es6 loader
 let esloader = require('../loader/compiler.js')
 
@@ -86,11 +88,23 @@ let getContent = function(entry, loaders) {
   content = getScript.call(null, entry)
 
   loaders.forEach(function (loader, index) {
-    let rule = new RegExp(Object.keys(loader)[0])
-    if (rule.test(entry)) {
-      content = Object.values(loader)[0].call(null, content)
+    for(item in loader) {
+      if(loader.hasOwnProperty(item)) {
+        let rule = new RegExp(item)
+        if (rule.test(entry)) {
+          let loaderFn = loader[item];
+          if(typeof loaderFn === 'function') {
+            content = loaderFn.call(null, content)
+          } else if(loaderFn instanceof Array) {
+            loaderFn.forEach(function(fn) {
+              content = fn.call(null, content)
+            })
+          }
+        }
+      }
     }
   })
+
 
   content = content.replace(/require\(['"'](.+?)['"']\)/g, function(patern, target) {
       let name = path.join("./src", target)
@@ -109,10 +123,11 @@ let getContent = function(entry, loaders) {
 // init pack
 let loaders = [
   {
-    ".css$": styleLoader
+    "\\.scss$": [sassLoader, styleLoader],
+    "\\.css$": styleLoader
   },
   {
-    ".js$": esloader
+    "\\.js$": esloader
   }
 ];
 let result = ejs.render(getTemplate.call(null, null), {

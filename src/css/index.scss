@@ -1,0 +1,12 @@
+@mixin test {
+  color: #fff;
+}
+
+body {
+  background-color: antiquewhite;
+  h1 {
+    font-size: 2rem;
+  }
+
+  @include test;
+}

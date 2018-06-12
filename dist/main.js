@@ -21,6 +21,17 @@
   })({
     
       
+        'src/css/index.scss': (function(module, exports, require){
+          eval(`
+    let style = document.createElement('style')
+    style.innerText = "body{background-color:antiquewhite;color:#fff}body h1{font-size:2rem}"
+    document.head.appendChild(style)
+  `)
+        })
+    
+      
+              ,
+      
         'src/css/main.css': (function(module, exports, require){
           eval(`
     let style = document.createElement('style')
@@ -45,6 +56,8 @@ console.log('hello I am b.js');`)
       
         'src/a.js': (function(module, exports, require){
           eval(`"use strict";
+
+require("src/css/index.scss");
 
 require("src/b.js");
 
