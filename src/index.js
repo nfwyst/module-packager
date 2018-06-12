@@ -1,3 +1,3 @@
-let result = require('./a.js')
+import result from './a.js'
 
 console.log(result)

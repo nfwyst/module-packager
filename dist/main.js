@@ -1,12 +1,22 @@
 
   (function (modules) {
+    var installedModules = {};
     function require(moduleId) {
-      var module = {
-        exports: {}
+      if(installedModules[moduleId]) {
+        return installedModules[moduleId].exports;
       }
+      var module = installedModules[moduleId] = {
+        id: moduleId,
+        loaded: false,
+        exports: {}
+      };
       modules[moduleId].call(module.exports, module, module.exports, require)
+      module.loaded = true;
       return module.exports
     }
+
+    require.m = modules;
+
     return require('./src/index.js')
   })({
     
@@ -23,33 +33,39 @@
               ,
       
         'src/b.js': (function(module, exports, require){
-          eval(`require("src/css/main.css")
+          eval(`"use strict";
 
+require("src/css/main.css");
 
-console.log('hello I am b.js')
-`)
+console.log('hello I am b.js');`)
         })
     
       
               ,
       
         'src/a.js': (function(module, exports, require){
-          eval(`require("src/b.js")
+          eval(`"use strict";
 
-let a = 12
+require("src/b.js");
 
-module.exports = 12
-`)
+var a = 12;
+
+module.exports = 12;`)
         })
     
       
               ,
       
         './src/index.js': (function(module, exports, require){
-          eval(`let result = require("src/a.js")
+          eval(`"use strict";
 
-console.log(result)
-`)
+var _a = require("src/a.js");
+
+var _a2 = _interopRequireDefault(_a);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+console.log(_a2.default);`)
         })
     
   })

@@ -8,6 +8,10 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
-    "ejs": "^2.6.1"
+    "babel": "^6.23.0",
+    "babel-preset-env": "^1.7.0",
+    "babylon": "^6.18.0",
+    "ejs": "^2.6.1",
+    "traverse": "^0.6.6"
   }
 }

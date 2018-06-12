@@ -1,4 +1,4 @@
-#! /usr/bin/env node
+#! /usr/bin/env babel-node
 let config = require("../config/default.js");
 
 let fs = require("fs");
@@ -7,6 +7,8 @@ let path = require("path");
 
 // css loader
 let styleLoader = require('../loader/style.js')
+// es6 loader
+let esloader = require('../loader/compiler.js')
 
 let modules = [];
 
@@ -23,20 +25,30 @@ let getScript = function(entry) {
   try {
     return fs.readFileSync(entry, "utf8");
   } catch (e) {
-    return false;
+    return e;
   }
 };
 
 let getTemplate = function() {
   return `
   (function (modules) {
+    var installedModules = {};
     function require(moduleId) {
-      var module = {
-        exports: {}
+      if(installedModules[moduleId]) {
+        return installedModules[moduleId].exports;
       }
+      var module = installedModules[moduleId] = {
+        id: moduleId,
+        loaded: false,
+        exports: {}
+      };
       modules[moduleId].call(module.exports, module, module.exports, require)
+      module.loaded = true;
       return module.exports
     }
+
+    require.m = modules;
+
     return require('<%=entry%>')
   })({
     <% for(let i = 0; i < modules.length; i++) { %>
@@ -71,20 +83,22 @@ let writeFile = function(output, result,  callback) {
 let getContent = function(entry, loaders) {
   let content = null
   loaders = loaders || []
-  content = getScript
-    .call(null, entry)
-    .replace(/require\(['"'](.+?)['"']\)/g, function(patern, target) {
-      let name = path.join("./src", target)
-      getContent.call(null, name, loaders)
-      return 'require("' + name + '")'
-    });
+  content = getScript.call(null, entry)
 
-  loaders.forEach(function(loader, index) {
+  loaders.forEach(function (loader, index) {
     let rule = new RegExp(Object.keys(loader)[0])
-    if(rule.test(entry)) {
+    if (rule.test(entry)) {
       content = Object.values(loader)[0].call(null, content)
     }
   })
+
+  content = content.replace(/require\(['"'](.+?)['"']\)/g, function(patern, target) {
+      let name = path.join("./src", target)
+      getContent.call(null, name, loaders)
+      return 'require("' + name + '")'
+  });
+
+
   modules.push({
     entry: entry,
     content: content
@@ -93,9 +107,14 @@ let getContent = function(entry, loaders) {
 };
 
 // init pack
-let loaders = [{
-  '\.css$': styleLoader
-}]
+let loaders = [
+  {
+    ".css$": styleLoader
+  },
+  {
+    ".js$": esloader
+  }
+];
 let result = ejs.render(getTemplate.call(null, null), {
   entry: config.entry,
   modules: getContent.call(null, config.entry, loaders)
